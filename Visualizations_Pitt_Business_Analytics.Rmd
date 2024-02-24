@@ -1,0 +1,217 @@
+---
+title: "Visualizations"
+author: "Meet Patel"
+date: "2024-02-23"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r}
+library(readxl)
+library(ggplot2)
+library(scales)
+library(fpp3)
+library(tsibble)
+library(forecast)
+```
+
+
+
+```{r}
+# NATIONAL SPORTING GOODS MARKET
+national_sporting <- read_excel("/Users/meetpatel/Desktop/Pitt Business Analytics Case Competition/Visualizations with R/sporting_goods.xlsx")
+national_sporting
+
+# Reshape the data for plotting
+data_long <- tidyr::pivot_longer(national_sporting, -Total, names_to = "Category", values_to = "Value")
+
+
+# Create the line chart with y-axis in scientific notation format
+ggplot(data_long, aes(x = Total, y = Value, color = Category)) +
+  geom_line() +
+  labs(title = " National Sporting Goods Sales Over Years",
+       x = "Year",
+       y = "Sales",
+       color = "Category") +
+  scale_y_continuous(labels = label_number_si(scale = 1e-9, suffix = " Bil")) +  # Format y-axis labels in scientific notation with 'Bil' suffix
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+# bar chart- total sales: 2018 to 2023
+total_sales <- aggregate(Value ~ Category, data = data_long, sum)
+
+ggplot(data_long, aes(x = Category, y = Value, fill = Category)) +
+  geom_bar(stat = "identity", width = 0.3) +  # Adjust thickness of bars
+  geom_text(data = total_sales, aes(label = sprintf("%.2f Bil", Value/1e9)), vjust = -0.5, size = 4) +  # Display total values at the top of bars with two decimal places
+  labs(title = "Total National Sporting Goods Sales by Category",
+       x = "Category",
+       y = "Total Sales") +
+  scale_y_continuous(labels = label_number_si(scale = 1e-9, suffix = " Bil")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),  # Center the title
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 10))  
+
+
+# 2018 Pie Chart
+total_sales_2018 <- data_long %>%
+  filter(Total == 2018) 
+
+# Plot pie chart with labels formatted in billions
+formatted_labels <- label_number_si(scale = 1e-9, suffix = " Bil")(total_sales_2018$Value)
+
+# Combine category names and formatted values
+label_billion_2018 <- paste0(total_sales_2018$Category, "\n", formatted_labels)
+
+# Plot pie chart with formatted labels
+pie(total_sales_2018$Value, 
+    labels = label_billion_2018, 
+    main = "National Sporting Total Sales in 2018",
+    col=terrain.colors(length(total_sales_2018$Value)))
+
+
+# 2023 Pie Chart
+total_sales_2023 <- data_long %>%
+  filter(Total == 2023 ) 
+
+# Plot pie chart with labels formatted in billions
+formatted_labels <- label_number_si(scale = 1e-9, suffix = " Bil")(total_sales_2023$Value)
+
+# Combine category names and formatted values
+label_billion_2023 <- paste0(total_sales_2023$Category, "\n", formatted_labels)
+
+# Plot pie chart with formatted labels
+pie(total_sales_2023$Value, 
+    labels = label_billion_2023, 
+    main = "National Sporting Total Sales in 2023",
+    col=terrain.colors(length(total_sales_2023$Value)))
+
+
+# Side by Side bar charts
+ggplot(data_long, aes(x = as.factor(Total), y = Value, fill = Category)) +
+  geom_bar(stat = "identity", position = position_dodge(), width = 0.8, colour = "black") +
+  labs(title = "National Sporting Sales by Category for Each Year",
+       x = "Year",
+       y = "Sales",
+       fill = "Category") +
+  scale_y_continuous(labels = label_number_si(scale = 1e-9, suffix = " Bil")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size=10), 
+        plot.title = element_text(hjust = 0.5))
+
+
+
+# Forecast
+
+
+# Convert dataframe to tsibble object
+national_sporting_ts <- tsibble::tsibble(Total = national_sporting_ts$Total, Fitness = national_sporting_ts$Fitness)
+
+# Fit an ARIMA model
+arima_model <- auto.arima(national_sporting_ts$Fitness)
+
+# Forecast for the years 2024 through 2030
+future_years <- seq(2024, 2030)
+future_data <- tsibble::tibble(Total = future_years)
+
+forecast_values <- forecast(arima_model, newdata = future_data)
+print(forecast_values)
+
+
+
+```
+
+
+
+
+```{r}
+# NATIONAL ATHLETIC FOOTWEAR MARKET
+
+athletic <- read_excel("/Users/meetpatel/Desktop/Pitt Business Analytics Case Competition/Visualizations with R/athletic_footwear.xlsx")
+athletic
+
+athletic_long <- tidyr::pivot_longer(athletic, -Total, names_to = "Category", values_to = "Value")
+
+# Create the line chart with y-axis in scientific notation format
+ggplot(athletic_long, aes(x = Total, y = Value, color = Category)) +
+  geom_line() +
+  labs(title = " National Athletic Footwear Sales Over Years",
+       x = "Year",
+       y = "Sales",
+       color = "Category") +
+  scale_y_continuous(labels = label_number_si(scale = 1e-9, suffix = " Bil")) +  # Format y-axis labels in scientific notation with 'Bil' suffix
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+# bar chart- total sales: 2018 to 2023
+total_sales <- aggregate(Value ~ Category, data = athletic_long, sum)
+
+ggplot(athletic_long, aes(x = Category, y = Value, fill = Category)) +
+  geom_bar(stat = "identity", width = 0.2) +  # Adjust thickness of bars
+  geom_text(data = total_sales, aes(label = sprintf("%.2f Bil", Value/1e9)), vjust = -0.5, size = 4) +  # Display total values at the top of bars with two decimal places
+  labs(title = "Total National Athletic Footwear Sales by Category",
+       x = "Category",
+       y = "Total Sales") +
+  scale_y_continuous(labels = label_number_si(scale = 1e-9, suffix = " Bil")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),  # Center the title
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 10))  # Rotate x-axis labels
+
+
+
+
+# 2018 Pie Chart
+total_sales_athletic_2018 <- athletic_long %>%
+  filter(Total == 2018) 
+
+# Plot pie chart with labels formatted in billions
+formatted_athletic_labels <- label_number_si(scale = 1e-9, suffix = " Bil")(total_sales_athletic_2018$Value)
+
+# Combine category names and formatted values
+label_athletic_billion_2018 <- paste0(total_sales_athletic_2018$Category, "\n", formatted_athletic_labels)
+
+# Plot pie chart with formatted labels
+pie(total_sales_athletic_2018$Value, 
+    labels = label_athletic_billion_2018, 
+    main = "National Athletic Footwear Total Sales in 2018",
+    cex = 1,  # Maintain the default label size
+    init.angle = 90,
+    col=terrain.colors(length(total_sales_athletic_2018$Value)))
+
+
+# 2023 Pie Chart
+total_sales_athletic_2023 <- athletic_long %>%
+  filter(Total == 2023) 
+
+# Plot pie chart with labels formatted in billions
+formatted_athletic_labels <- label_number_si(scale = 1e-9, suffix = " Bil")(total_sales_athletic_2023$Value)
+
+# Combine category names and formatted values
+label_athletic_billion_2023 <- paste0(total_sales_athletic_2023$Category, "\n", formatted_athletic_labels)
+
+# Plot pie chart with formatted labels
+pie(total_sales_athletic_2023$Value, 
+    labels = label_athletic_billion_2023, 
+    main = "National Athletic Footwear Total Sales in 2023",
+    cex = 1,  # Maintain the default label size
+    init.angle = 90,
+    col=terrain.colors(length(total_sales_athletic_2023$Value)))
+
+
+# Side by Side bar charts
+ggplot(athletic_long, aes(x = as.factor(Total), y = Value, fill = Category)) +
+  geom_bar(stat = "identity", position = position_dodge(), width = 0.8, colour = "black") +
+  labs(title = "National Athletic Sales by Category for Each Year",
+       x = "Year",
+       y = "Sales",
+       fill = "Category") +
+  scale_y_continuous(labels = label_number_si(scale = 1e-9, suffix = " Bil")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(size=10), 
+        plot.title = element_text(hjust = 0.5))
+
+```
+
+
