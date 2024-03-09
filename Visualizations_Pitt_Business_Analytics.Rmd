@@ -14,6 +14,7 @@ library(scales)
 library(fpp3)
 library(tsibble)
 library(forecast)
+library(magrittr) 
 ```
 
 
@@ -102,8 +103,6 @@ ggplot(data_long, aes(x = as.factor(Total), y = Value, fill = Category)) +
 
 
 
-# Forecast
-
 
 # Convert dataframe to tsibble object
 national_sporting_ts <- tsibble::tsibble(Total = national_sporting_ts$Total, Fitness = national_sporting_ts$Fitness)
@@ -117,6 +116,9 @@ future_data <- tsibble::tibble(Total = future_years)
 
 forecast_values <- forecast(arima_model, newdata = future_data)
 print(forecast_values)
+
+
+
 
 
 
@@ -211,6 +213,63 @@ ggplot(athletic_long, aes(x = as.factor(Total), y = Value, fill = Category)) +
   theme_minimal() +
   theme(axis.text.x = element_text(size=10), 
         plot.title = element_text(hjust = 0.5))
+
+
+
+
+
+
+forecasting_df <- read_excel("/Users/meetpatel/Desktop/Pitt Business Analytics Case Competition/Sales Growth 2018-2028.xlsx")
+forecasting_df
+
+# Reshape the data for plotting
+data_long <- tidyr::pivot_longer(forecasting_df, -Brand, names_to = "Year", values_to = "Value")
+
+data_long <- data_long %>%
+  arrange(Year)
+
+
+# Create the line chart with y-axis in scientific notation format
+ggplot(data_long, aes(x = Year, y = Value, color = Brand)) +
+  geom_line() +
+  labs(title = " National Sporting Goods Sales Over Years",
+       x = "Year",
+       y = "Sales",
+       color = "Brand") +
+  scale_y_continuous(labels = label_number_si(scale = 1e-9, suffix = " Bil")) +  # Format y-axis labels in scientific notation with 'Bil' suffix
+  theme_minimal()+
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Sort the data_long tibble by Year
+data_long_sorted <- data_long %>%
+  arrange(Year)
+
+# Create the line chart with y-axis in scientific notation format
+ggplot(data_long_sorted, aes(x = Year, y = Value, color = Brand, group = Brand)) +
+  geom_line() +
+  labs(title = "B&M Sales Forecast",
+       x = "Year",
+       y = "Sales",
+       color = "Brand") +
+  scale_y_continuous(labels = scales::label_number_si(scale = 1e-9, suffix = " Bil")) +  # Format y-axis labels in scientific notation with 'Bil' suffix
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+
+max_value <- max(data_long_sorted$Value, na.rm = TRUE)
+# Create the line chart with y-axis in scientific notation format
+ggplot(data_long_sorted, aes(x = Year, y = Value, color = Brand, group = Brand)) +
+  geom_line(size = 1.2) +  # Increase line thickness
+  labs(title = "B&M Sales Forecast",
+       x = "Year",
+       y = "Sales (Billions)") +  # Updated y-axis label
+  scale_y_continuous(labels = scales::label_number_si(scale = 1e-9, suffix = " Bil"),
+                     limits = c(0, max_value + 2e9),  # Set y-axis limits with a gap of 2e9
+                     breaks = seq(0, max_value + 2e9, by = 2e9)) +
+                    # limits = c(0, max_value+4e9)) +
+                   #  breaks = seq(0, max_value+4e9, by = 2e9)) +  # Customize y-axis scale
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
